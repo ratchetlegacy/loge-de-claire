@@ -182,6 +182,12 @@ footer p{margin:0}footer a{color:#fff;margin-left:20px}
 .demo{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);z-index:60;background:var(--ink);color:var(--parch);border:2px solid var(--gold);border-radius:999px;padding:8px 18px;font-size:13px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,.3);max-width:calc(100% - 24px);text-align:center}
 
 @media (max-width:720px){.demo{font-size:11px;padding:5px 12px;bottom:8px}.demo .long{display:none}}
+.badge.last{background:#9A4A00}
+.sizes{display:flex;flex-wrap:wrap;gap:8px}
+.size{min-width:72px;min-height:52px;border-radius:12px;border:2px solid #C9B58A;background:#fff;color:var(--brown);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 10px;line-height:1.2}
+.size span{font-size:12px;font-weight:700}
+.size[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.size:disabled{background:#EFE6D2;border-color:#EFE6D2;color:#6B5744;cursor:not-allowed;text-decoration:line-through}
 .toast{position:fixed;left:50%;bottom:70px;transform:translateX(-50%);z-index:70;background:var(--red);color:#fff;border-radius:12px;padding:12px 18px;font-weight:700;display:none;max-width:calc(100% - 24px);text-align:center}
 </style>
 </head>
@@ -288,65 +294,97 @@ footer p{margin:0}footer a{color:#fff;margin-left:20px}
 
 <footer><div class="wrap">
 <p>© 2026 La Loge de Claire – location de costumes et déguisements</p>
-<p><a href="#">Mentions légales</a><a href="#">Confidentialité</a></p>
+<p><a href="#">Mentions légales</a><a href="#">Confidentialité</a><a href="admin.html">Espace Claire</a></p>
 </div></footer>
 
-<p class="demo">Version de démonstration<span class="long"> – aucune réservation n'est enregistrée</span></p>
+<p class="demo">Version de démonstration<span class="long"> – les données restent sur cet appareil</span></p>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
-(function(){
-var CHECK='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>';
+var LDC = (function(){
+var KS='ldc-demo-stock-v2', KR='ldc-demo-rdv-v1';
 var CATS=[{id:'folles',label:'Années folles',bg:'#1C1B1A'},{id:'rock',label:'Rock & pin-up',bg:'#8E0F16'},{id:'disco',label:'Disco & 80',bg:'#5A3B28'},{id:'histo',label:'Historique',bg:'#3B2416'},{id:'enfant',label:'Enfants',bg:'#6E0C12'}];
-var LABEL={};CATS.forEach(function(c){LABEL[c.id]=c.label;});
-var STOCK=[
-{id:1,name:'Robe charleston à franges dorées',cat:'folles',size:'S à L',out:false,bg:'#1C1B1A'},
-{id:2,name:'Costume gangster rayé + chapeau',cat:'folles',size:'M à XXL',out:true,back:'2 nov.',bg:'#3B2416'},
-{id:12,name:'Smoking années 20',cat:'folles',size:'M à XL',out:false,bg:'#5A3B28'},
-{id:3,name:'Robe pin-up à pois',cat:'rock',size:'XS à XL',out:false,bg:'#8E0F16'},
-{id:4,name:'Blouson rock et banane',cat:'rock',size:'M à XL',out:false,bg:'#1C1B1A'},
-{id:5,name:'Combinaison disco pailletée',cat:'disco',size:'S à L',out:true,back:'31 oct.',bg:'#5A3B28'},
-{id:6,name:'Tenue aérobic fluo années 80',cat:'disco',size:'S à XL',out:false,bg:'#8E0F16'},
-{id:7,name:'Robe de marquise XVIIIe',cat:'histo',size:'M',out:false,bg:'#3B2416'},
-{id:8,name:'Mousquetaire avec cape',cat:'histo',size:'L à XL',out:false,bg:'#5A3B28'},
-{id:9,name:'Pirate enfant',cat:'enfant',size:'4 à 10 ans',out:false,bg:'#1C1B1A'},
-{id:10,name:'Princesse enfant',cat:'enfant',size:'3 à 8 ans',out:true,back:'29 oct.',bg:'#8E0F16'},
-{id:11,name:'Chevalier enfant',cat:'enfant',size:'5 à 10 ans',out:false,bg:'#3B2416'}
+function sz(s,n,f){return {s:s,n:n,f:(f===undefined?n:f)};}
+var DEFAULT=[
+{id:1,name:'Robe charleston à franges dorées',cat:'folles',bg:'#1C1B1A',sizes:[sz('S',2),sz('M',2,1),sz('L',1)]},
+{id:2,name:'Costume gangster rayé + chapeau',cat:'folles',bg:'#3B2416',back:'2 nov.',sizes:[sz('M',1,0),sz('L',1,0),sz('XXL',1,0)]},
+{id:12,name:'Smoking années 20',cat:'folles',bg:'#5A3B28',sizes:[sz('M',1),sz('L',2),sz('XL',1)]},
+{id:3,name:'Robe pin-up à pois',cat:'rock',bg:'#8E0F16',sizes:[sz('XS',1),sz('S',2,0),sz('M',2),sz('L',1),sz('XL',1)]},
+{id:4,name:'Blouson rock et banane',cat:'rock',bg:'#1C1B1A',sizes:[sz('M',2),sz('XL',1)]},
+{id:5,name:'Combinaison disco pailletée',cat:'disco',bg:'#5A3B28',back:'31 oct.',sizes:[sz('S',1,0),sz('L',1,0)]},
+{id:6,name:'Tenue aérobic fluo années 80',cat:'disco',bg:'#8E0F16',sizes:[sz('S',2),sz('M',2),sz('XL',1)]},
+{id:7,name:'Robe de marquise XVIIIe',cat:'histo',bg:'#3B2416',sizes:[sz('M',1)]},
+{id:8,name:'Mousquetaire avec cape',cat:'histo',bg:'#5A3B28',sizes:[sz('L',1),sz('XL',1)]},
+{id:9,name:'Pirate enfant',cat:'enfant',bg:'#1C1B1A',sizes:[sz('4 ans',2),sz('6 ans',2,1),sz('8-10 ans',1)]},
+{id:10,name:'Princesse enfant',cat:'enfant',bg:'#8E0F16',back:'29 oct.',sizes:[sz('3-4 ans',1,0),sz('6-8 ans',1,0)]},
+{id:11,name:'Chevalier enfant',cat:'enfant',bg:'#3B2416',sizes:[sz('5-6 ans',1),sz('8-10 ans',1)]}
 ];
-var S={view:null,idx:0,onlyAvail:false,picks:[],day:null,slot:null,open:'day',done:false};
+function get(k,def){try{var v=localStorage.getItem(k);return v?JSON.parse(v):def;}catch(e){return def;}}
+function put(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+function clone(o){return JSON.parse(JSON.stringify(o));}
+function free(m){return m.sizes.reduce(function(a,s){return a+s.f;},0);}
+function total(m){return m.sizes.reduce(function(a,s){return a+s.n;},0);}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+return {
+CATS:CATS,
+label:function(id){for(var i=0;i<CATS.length;i++){if(CATS[i].id===id)return CATS[i].label;}return id;},
+catBg:function(id){for(var i=0;i<CATS.length;i++){if(CATS[i].id===id)return CATS[i].bg;}return '#3B2416';},
+stock:function(){return get(KS,clone(DEFAULT));},
+saveStock:function(s){put(KS,s);},
+rdv:function(){return get(KR,[]);},
+saveRdv:function(r){put(KR,r);},
+reset:function(){try{localStorage.removeItem(KS);localStorage.removeItem(KR);}catch(e){}},
+free:free,total:total,esc:esc
+};
+})();
+</script>
+<script>
+(function(){
+var esc=LDC.esc;
+var CHECK='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"/></svg>';
+var STOCK=LDC.stock();
+var S={view:null,idx:0,onlyAvail:false,size:null,picks:[],day:null,slot:null,open:'day',done:false};
 
-function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 function byId(id){for(var i=0;i<STOCK.length;i++){if(STOCK[i].id===id)return STOCK[i];}}
-function picked(id){return S.picks.indexOf(id)!==-1;}
-function togglePick(id){var i=S.picks.indexOf(id);if(i===-1)S.picks.push(id);else S.picks.splice(i,1);render();}
+function pickIndex(id,size){for(var i=0;i<S.picks.length;i++){if(S.picks[i].id===id&&S.picks[i].size===size)return i;}return -1;}
 window.toast=function(msg){var t=document.getElementById('toast');t.textContent=msg;t.style.display='block';clearTimeout(t._h);t._h=setTimeout(function(){t.style.display='none';},3000);};
 
-function list(){return STOCK.filter(function(k){return k.cat===S.view&&!(S.onlyAvail&&k.out);});}
+function list(){return STOCK.filter(function(k){return k.cat===S.view&&!(S.onlyAvail&&LDC.free(k)===0);});}
+function badge(k){var f=LDC.free(k);if(f===0)return '<span class="badge out">Tout est loué'+(k.back?' – retour le '+esc(k.back):'')+'</span>';if(f===1)return '<span class="badge last">Dernier exemplaire</span>';return '<span class="badge">'+f+' disponibles</span>';}
 
 function renderCatalogue(){
 var el=document.getElementById('catalogue'),h='';
 if(!S.view){
 h+='<div class="tiles">';
-CATS.forEach(function(c){
+LDC.CATS.forEach(function(c){
 var all=STOCK.filter(function(k){return k.cat===c.id;});
-var free=all.filter(function(k){return !k.out;}).length;
-h+='<button type="button" class="tile" data-cat="'+c.id+'"><span class="ph" style="background:'+c.bg+'">[PHOTO]</span><span class="body"><span class="name">'+esc(c.label)+'</span><span class="count">'+all.length+' costumes · '+free+' disponibles</span><span class="go">Ouvrir le catalogue →</span></span></button>';
+var free=all.filter(function(k){return LDC.free(k)>0;}).length;
+h+='<button type="button" class="tile" data-cat="'+c.id+'"><span class="ph" style="background:'+c.bg+'">[PHOTO]</span><span class="body"><span class="name">'+esc(c.label)+'</span><span class="count">'+all.length+' modèles · '+free+' disponibles</span><span class="go">Ouvrir le catalogue →</span></span></button>';
 });
 h+='</div>';
 }else{
 var L=list();if(S.idx>L.length-1)S.idx=Math.max(L.length-1,0);
-h+='<div class="cat-top"><div class="l"><button type="button" class="btn btn-outline" data-act="back">← Tous les univers</button><h3>'+esc(LABEL[S.view])+'</h3></div>';
+h+='<div class="cat-top"><div class="l"><button type="button" class="btn btn-outline" data-act="back">← Tous les univers</button><h3>'+esc(LDC.label(S.view))+'</h3></div>';
 h+='<button type="button" class="switch" data-act="avail" aria-pressed="'+S.onlyAvail+'"><span class="track" aria-hidden="true"><span class="knob"></span></span>Disponibles uniquement</button></div>';
 if(!L.length){h+='<p class="empty">Aucun costume disponible dans cet univers pour le moment.</p>';}
 else{
-var k=L[S.idx],on=picked(k.id);
-h+='<div class="sheet'+(on?' picked':'')+'"><div class="ph" style="background:'+k.bg+';opacity:'+(k.out?.45:1)+'">[PHOTO : '+esc(k.name)+']</div><div class="info">';
-h+='<span class="badge'+(k.out?' out':'')+'">'+(k.out?'Loué – retour le '+esc(k.back):'Disponible')+'</span>';
-h+='<h4>'+esc(k.name)+'</h4><p>Tailles : '+esc(k.size)+'</p><p>[DESCRIPTION : accessoires inclus, matière…]</p>';
-h+='<button type="button" class="add'+(on?' on':'')+'" data-pick="'+k.id+'" aria-pressed="'+on+'"'+(k.out?' disabled':'')+'>'+(k.out?'Indisponible':(on?'Ajouté – retirer':'Ajouter à mon essayage'))+'</button>';
+var k=L[S.idx],f=LDC.free(k);
+var sel=S.size&&k.sizes.some(function(s){return s.s===S.size&&s.f>0;})?S.size:null;
+var on=sel&&pickIndex(k.id,sel)!==-1;
+h+='<div class="sheet"><div class="ph" style="background:'+k.bg+';opacity:'+(f?1:.45)+'">[PHOTO : '+esc(k.name)+']</div><div class="info">';
+h+=badge(k)+'<h4>'+esc(k.name)+'</h4><p>[DESCRIPTION : accessoires inclus, matière…]</p>';
+h+='<p class="q" style="margin:4px 0 0">Choisissez votre taille</p><div class="sizes" role="group" aria-label="Tailles">';
+k.sizes.forEach(function(s){
+var lbl=s.f===0?'loué':(s.f===1?'dernier':s.f+' dispo');
+h+='<button type="button" class="size" data-size="'+esc(s.s)+'" aria-pressed="'+(sel===s.s)+'"'+(s.f===0?' disabled':'')+'><strong>'+esc(s.s)+'</strong><span>'+lbl+'</span></button>';
+});
+h+='</div>';
+if(f===0)h+='<button type="button" class="add" disabled>Indisponible pour le moment</button>';
+else if(!sel)h+='<button type="button" class="add" disabled>Choisissez une taille</button>';
+else h+='<button type="button" class="add'+(on?' on':'')+'" data-pick="'+k.id+'" aria-pressed="'+on+'">'+(on?'Ajouté ('+esc(sel)+') – retirer':'Ajouter à mon essayage ('+esc(sel)+')')+'</button>';
 h+='<div class="pager"><button type="button" class="arrow" data-act="prev" aria-label="Costume précédent">‹</button><p>'+(S.idx+1)+' / '+L.length+'</p><button type="button" class="arrow next" data-act="next" aria-label="Costume suivant">›</button></div>';
 h+='</div></div><div class="thumbs" role="group" aria-label="Tous les costumes de cet univers">';
-L.forEach(function(t,i){h+='<button type="button" class="thumb'+(t.out?' out':'')+'" data-go="'+i+'" aria-label="'+esc(t.name)+'" aria-current="'+(i===S.idx)+'" style="background:'+t.bg+'"></button>';});
+L.forEach(function(t,i){h+='<button type="button" class="thumb'+(LDC.free(t)?'':' out')+'" data-go="'+i+'" aria-label="'+esc(t.name)+'" aria-current="'+(i===S.idx)+'" style="background:'+t.bg+'"></button>';});
 h+='</div>';
 }
 }
@@ -355,18 +393,20 @@ var pb=document.getElementById('picks-bar'),n=S.picks.length;
 pb.innerHTML=n?'<div class="picks-bar"><p>'+picksLabel()+' pour votre essayage</p><a class="btn btn-red" href="#essayage">Réserver mon essayage</a></div>':'';
 }
 function picksLabel(){var n=S.picks.length;return n===1?'1 costume sélectionné':n+' costumes sélectionnés';}
+function picksText(){return S.picks.map(function(p){var k=byId(p.id);return (k?k.name:'?')+' ('+p.size+')';}).join(', ');}
 
 var DOW=['Dim.','Lun.','Mar.','Mer.','Jeu.','Ven.','Sam.'],DOWL=['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
 var MON=['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'],MONL=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
 var TIMES=['10h00','11h00','14h00','15h00','16h00','17h00','18h00'];
-var DAYS=[];(function(){var d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()+1);while(DAYS.length<10){if(d.getDay()!==0){DAYS.push({idx:DAYS.length,dow:DOW[d.getDay()],num:d.getDate(),mon:MON[d.getMonth()],label:DOWL[d.getDay()]+' '+d.getDate()+' '+MONL[d.getMonth()]});}d.setDate(d.getDate()+1);}})();
+var DAYS=[];(function(){var d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()+1);while(DAYS.length<10){if(d.getDay()!==0){DAYS.push({idx:DAYS.length,key:d.toISOString().slice(0,10),dow:DOW[d.getDay()],num:d.getDate(),mon:MON[d.getMonth()],label:DOWL[d.getDay()]+' '+d.getDate()+' '+MONL[d.getMonth()]});}d.setDate(d.getDate()+1);}})();
+function taken(day,t){return LDC.rdv().some(function(r){return r.key===day.key&&r.slot===t&&r.status!=='annulé';});}
 
 function renderBooking(){
 var el=document.getElementById('booking'),h='';
 if(S.done){
 h+='<div class="done"><span class="check" aria-hidden="true">'+CHECK.replace(/16/g,'30')+'</span><h3>Rendez-vous demandé !</h3><p style="font-size:19px;font-weight:700">'+esc(S.day.label)+' à '+S.slot+'</p>';
 if(S.picks.length)h+='<p>'+picksLabel()+' à essayer.</p>';
-h+='<p class="muted" style="max-width:480px">Claire reçoit votre demande et vous confirme le rendez-vous. [MODE DE CONFIRMATION À DÉFINIR]</p><button type="button" class="btn btn-outline" data-act="reset">Modifier ou réserver un autre créneau</button></div>';
+h+='<p class="muted" style="max-width:480px">Claire reçoit votre demande et vous confirme le rendez-vous. [MODE DE CONFIRMATION À DÉFINIR]</p><button type="button" class="btn btn-outline" data-act="reset">Réserver un autre créneau</button></div>';
 el.innerHTML=h;return;
 }
 var dayOpen=!S.day||S.open==='day',slotOpen=!!S.day&&S.open==='slot',infoOpen=!!S.day&&!!S.slot&&S.open==='info';
@@ -380,13 +420,13 @@ if(S.slot&&!slotOpen)h+='<div class="summary"><p><span class="check">'+CHECK+'</
 else if(!slotOpen)h+='<p class="pending">2. Créneau</p>';
 if(slotOpen){
 h+='<div><p class="q">2. Choisissez un créneau – '+esc(S.day.label)+'</p><div class="slots">';
-TIMES.forEach(function(t,j){var full=(S.day.idx+j)%4===1;h+='<button type="button" class="slot" data-slot="'+t+'"'+(full?' disabled':'')+' aria-pressed="'+(S.slot===t)+'">'+t+(full?' · complet':'')+'</button>';});
+TIMES.forEach(function(t,j){var full=(S.day.idx+j)%4===1||taken(S.day,t);h+='<button type="button" class="slot" data-slot="'+t+'"'+(full?' disabled':'')+' aria-pressed="'+(S.slot===t)+'">'+t+(full?' · complet':'')+'</button>';});
 h+='</div></div>';
 }
 if(!infoOpen)h+='<p class="pending">3. Costumes et coordonnées</p>';
 else{
 h+='<div><p class="q">3. Costumes à essayer</p>';
-if(S.picks.length){h+='<div class="chips">';S.picks.forEach(function(id){var k=byId(id);h+='<span class="chip">'+esc(k.name)+'<button type="button" data-unpick="'+id+'" aria-label="Retirer '+esc(k.name)+'">×</button></span>';});h+='</div>';}
+if(S.picks.length){h+='<div class="chips">';S.picks.forEach(function(p,i){var k=byId(p.id);if(!k)return;h+='<span class="chip">'+esc(k.name)+' – '+esc(p.size)+'<button type="button" data-unpick="'+i+'" aria-label="Retirer '+esc(k.name)+'">×</button></span>';});h+='</div>';}
 h+='<p class="muted" style="margin:0 0 24px;font-size:15px">'+(S.picks.length?'Claire les préparera pour votre venue.':'Aucun costume choisi pour l’instant, ce n’est pas obligatoire.')+' <a href="#costumes">Parcourir le vestiaire</a></p>';
 h+='<p class="q">Vos coordonnées</p><div class="grid-form">';
 h+='<div class="field"><label for="r-nom">Nom</label><input id="r-nom" type="text" autocomplete="name"></div>';
@@ -399,27 +439,35 @@ el.innerHTML=h;
 }
 
 function render(){renderCatalogue();renderBooking();}
+function val(id){var e=document.getElementById(id);return e?e.value.trim():'';}
 
 document.addEventListener('click',function(e){
 var b=e.target.closest('button');if(!b)return;
-var L;
-if(b.dataset.cat){S.view=b.dataset.cat;S.idx=0;render();return;}
-if(b.dataset.pick){togglePick(+b.dataset.pick);return;}
-if(b.dataset.unpick){togglePick(+b.dataset.unpick);return;}
-if(b.dataset.go){S.idx=+b.dataset.go;render();return;}
+var L,k;
+if(b.dataset.cat){S.view=b.dataset.cat;S.idx=0;S.size=null;render();return;}
+if(b.dataset.size){S.size=b.dataset.size;render();return;}
+if(b.dataset.pick){var id=+b.dataset.pick,i=pickIndex(id,S.size);if(i===-1)S.picks.push({id:id,size:S.size});else S.picks.splice(i,1);render();return;}
+if(b.dataset.unpick){S.picks.splice(+b.dataset.unpick,1);render();return;}
+if(b.dataset.go){S.idx=+b.dataset.go;S.size=null;render();return;}
 if(b.dataset.day){S.day=DAYS[+b.dataset.day];S.slot=null;S.open='slot';render();return;}
 if(b.dataset.slot){S.slot=b.dataset.slot;S.open='info';render();return;}
 switch(b.dataset.act){
-case 'back':S.view=null;S.idx=0;render();document.getElementById('costumes').scrollIntoView();break;
-case 'avail':S.onlyAvail=!S.onlyAvail;S.idx=0;render();break;
-case 'prev':L=list();S.idx=(S.idx-1+L.length)%L.length;render();break;
-case 'next':L=list();S.idx=(S.idx+1)%L.length;render();break;
+case 'back':S.view=null;S.idx=0;S.size=null;render();document.getElementById('costumes').scrollIntoView();break;
+case 'avail':S.onlyAvail=!S.onlyAvail;S.idx=0;S.size=null;render();break;
+case 'prev':L=list();S.idx=(S.idx-1+L.length)%L.length;S.size=null;render();break;
+case 'next':L=list();S.idx=(S.idx+1)%L.length;S.size=null;render();break;
 case 'edit-day':S.open='day';render();break;
 case 'edit-slot':S.open='slot';render();break;
-case 'confirm':S.done=true;render();document.getElementById('essayage').scrollIntoView();break;
-case 'reset':S.done=false;S.day=null;S.slot=null;S.open='day';render();break;
+case 'confirm':
+if(!val('r-nom')||!val('r-tel')){toast('Indiquez au moins votre nom et votre téléphone.');return;}
+var r=LDC.rdv();
+r.push({id:Date.now(),key:S.day.key,day:S.day.label,slot:S.slot,name:val('r-nom'),tel:val('r-tel'),nb:val('r-nb'),note:val('r-theme'),costumes:picksText(),status:'à confirmer'});
+LDC.saveRdv(r);
+S.done=true;render();document.getElementById('essayage').scrollIntoView();break;
+case 'reset':S.done=false;S.day=null;S.slot=null;S.open='day';S.picks=[];render();break;
 }
 });
+window.addEventListener('storage',function(){STOCK=LDC.stock();render();});
 render();
 })();
 </script>
