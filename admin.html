@@ -92,6 +92,12 @@ header .btn{min-height:40px;padding:0 14px;font-size:14px}
 .draft .ph{display:block;height:100px}
 .draft span:last-child{display:block;padding:6px 0}
 button.sw{border:0;cursor:pointer;padding:0}
+.btn.small{min-height:44px;padding:0 16px;font-size:14px}
+.btn-del{background:#fff;color:var(--red);border:2px solid var(--red)}
+.card-f{gap:8px;flex-wrap:wrap}
+.sub-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.draft-box{flex:0 0 auto;display:flex;flex-direction:column;gap:4px}
+.draft-del{min-height:44px;border:0;border-radius:10px;background:#FBEBEB;color:var(--red);font-weight:900;cursor:pointer}
 .note{font-size:13px;color:var(--brown2);margin:16px 0 40px;text-align:center}
 .toast{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:20;background:var(--ink);color:#fff;border:2px solid var(--gold);border-radius:12px;padding:10px 16px;font-weight:700;display:none;max-width:calc(100% - 24px);text-align:center}
 </style>
@@ -171,8 +177,8 @@ h+='<div class="shoot"><p><strong>Séance photo</strong> – prenez vos costumes
 if(A.adding)h+=formHtml();
 var drafts=stock.filter(function(m){return m.draft;});
 if(drafts.length&&!A.adding){
-h+='<h2 class="sub">À compléter ('+drafts.length+')</h2><div class="drafts">';
-drafts.forEach(function(m){h+='<button type="button" class="draft" data-edit="'+m.id+'"><span class="ph" style="'+photoStyle(m)+'"></span><span>Compléter</span></button>';});
+h+='<div class="sub-row"><h2 class="sub">Photos en attente ('+drafts.length+')</h2><button type="button" class="del" data-act="del-drafts">Tout supprimer</button></div><div class="drafts">';
+drafts.forEach(function(m){h+='<div class="draft-box"><button type="button" class="draft" data-edit="'+m.id+'"><span class="ph" style="'+photoStyle(m)+'"></span><span>Compléter</span></button><button type="button" class="draft-del" data-del="'+m.id+'" aria-label="Supprimer cette photo">Supprimer</button></div>';});
 h+='</div>';
 }
 var q=A.q.toLowerCase();
@@ -191,7 +197,7 @@ h+='<button type="button" class="pm" data-in="'+m.id+'" data-i="'+i+'" aria-labe
 });
 h+='</div>';
 if(f===0)h+='<div class="back"><label for="b-'+m.id+'">Retour prévu le</label><input id="b-'+m.id+'" type="text" data-back="'+m.id+'" placeholder="ex. 2 nov." value="'+esc(m.back||'')+'"></div>';
-h+='<div class="card-f"><button type="button" class="del" data-del="'+m.id+'">Supprimer</button></div></div>';
+h+='<div class="card-f"><button type="button" class="btn btn-line small" data-edit="'+m.id+'">Modifier</button><button type="button" class="btn btn-del small" data-del="'+m.id+'">Supprimer le costume</button></div></div>';
 });
 h+='</div><p class="note">« − » quand un exemplaire part en location, « + » quand il revient. Le site se met à jour tout seul.</p>';
 }else{
@@ -204,7 +210,7 @@ h+='<div class="rdv"><div class="top"><b>'+esc(r.day)+' · '+esc(r.slot)+'</b><s
 h+='<p><strong>'+esc(r.name)+'</strong> – <a href="tel:'+esc(r.tel)+'">'+esc(r.tel)+'</a> – '+esc(r.nb)+' pers.</p>';
 if(r.costumes)h+='<p>Costumes : '+esc(r.costumes)+'</p>';
 if(r.note)h+='<p>Précisions : '+esc(r.note)+'</p>';
-if(r.status!=='annulé')h+='<div class="acts">'+(r.status!=='confirmé'?'<button class="btn btn-red" type="button" data-conf="'+r.id+'">Confirmer</button>':'')+'<button class="btn btn-line" type="button" data-cancel="'+r.id+'">Annuler</button></div>';
+if(r.status!=='annulé')h+='<div class="acts">'+(r.status!=='confirmé'?'<button class="btn btn-red" type="button" data-conf="'+r.id+'">Confirmer et envoyer le SMS</button>':'<button class="btn btn-line" type="button" data-resms="'+r.id+'">Renvoyer le SMS</button>')+'<button class="btn btn-line" type="button" data-cancel="'+r.id+'">Annuler</button></div>';
 h+='</div>';
 });
 h+='</div><p class="note">En version finale, Claire recevrait une notification à chaque nouvelle demande.</p>';
@@ -227,7 +233,7 @@ h+='</div></div><div class="field"><span class="lbl">Tailles – touchez pour aj
 ADULT.concat(KIDS).forEach(function(s){var has=F.sizes.some(function(x){return x.s===s;});if(!has)h+='<button type="button" class="opt" data-addsize="'+esc(s)+'">+ '+esc(s)+'</button>';});
 h+='</div>';
 if(F.sizes.length){h+='<div class="rows" style="margin-top:8px">';F.sizes.forEach(function(x,i){h+='<div class="row"><span class="s">'+esc(x.s)+'</span><button type="button" class="pm" data-fminus="'+i+'" aria-label="Un exemplaire de moins, taille '+esc(x.s)+'">−</button><span class="c">'+x.n+'<small>exemplaire'+(x.n>1?'s':'')+'</small></span><button type="button" class="pm" data-fplus="'+i+'" aria-label="Un exemplaire de plus, taille '+esc(x.s)+'">+</button></div>';});h+='</div>';}
-h+='</div><div class="form-acts"><button class="btn btn-red" type="submit">Enregistrer</button><button class="btn btn-line" type="button" data-act="cancel-form">Annuler</button></div></form>';
+h+='</div><div class="form-acts"><button class="btn btn-red" type="submit">Enregistrer</button><button class="btn btn-line" type="button" data-act="cancel-form">Annuler</button>'+(F.id?'<button class="btn btn-del" type="button" data-del="'+F.id+'">Supprimer</button>':'')+'</div></form>';
 return h;
 }
 function shrink(file,cb){
@@ -238,6 +244,13 @@ var s=LDC.stock();urls.forEach(function(u,i){s.unshift({id:Date.now()+i,draft:tr
 LDC.saveStock(s);
 if(JSON.stringify(LDC.stock()).length<JSON.stringify(s).length-10){toast('Mémoire de démo pleine : remettez la démo à zéro.');return;}
 render();toast(urls.length>1?urls.length+' photos ajoutées – à compléter':'Photo ajoutée – vous pouvez enchaîner');
+}
+function openSms(r,kind){
+var num=String(r.tel||'').replace(/[^0-9+]/g,'');
+var txt=kind==='conf'
+?'Bonjour '+r.name+', votre essayage à La Loge de Claire est confirmé le '+r.day+' à '+r.slot+'. À bientôt ! Claire – 06 38 43 08 44'
+:'Bonjour '+r.name+', je suis désolée, je dois annuler votre essayage du '+r.day+' à '+r.slot+'. Rappelez-moi pour choisir un autre créneau. Claire – 06 38 43 08 44';
+window.location.href='sms:'+num+'?&body='+encodeURIComponent(txt);
 }
 function upd(fn){var s=LDC.stock();fn(s);LDC.saveStock(s);render();}
 function find(s,id){for(var i=0;i<s.length;i++){if(s[i].id===id)return s[i];}}
@@ -269,12 +282,18 @@ if(b.dataset.fplus){A.form.sizes[+b.dataset.fplus].n++;render();return;}
 if(b.dataset.fminus){var fi=+b.dataset.fminus;A.form.sizes[fi].n--;if(A.form.sizes[fi].n<=0)A.form.sizes.splice(fi,1);render();return;}
 if(b.dataset.out){var id=+b.dataset.out,i=+b.dataset.i;upd(function(s){var m=find(s,id);if(m.sizes[i].f>0)m.sizes[i].f--;});return;}
 if(b.dataset.in){var id2=+b.dataset.in,j=+b.dataset.i;upd(function(s){var m=find(s,id2);if(m.sizes[j].f<m.sizes[j].n)m.sizes[j].f++;if(LDC.free(m)>0)delete m.back;});return;}
-if(b.dataset.del){var id3=+b.dataset.del;if(confirm('Supprimer ce costume ?'))upd(function(s){for(var k=0;k<s.length;k++){if(s[k].id===id3){s.splice(k,1);break;}}});return;}
-if(b.dataset.conf){var c=+b.dataset.conf;updR(function(r){r.forEach(function(x){if(x.id===c)x.status='confirmé';});});return;}
-if(b.dataset.cancel){var d=+b.dataset.cancel;updR(function(r){r.forEach(function(x){if(x.id===d)x.status='annulé';});});return;}
+if(b.dataset.del){
+var id3=+b.dataset.del,dm=find(LDC.stock(),id3);if(!dm)return;
+var q=dm.draft?'Supprimer cette photo en attente ?':'Supprimer « '+dm.name+' » ? Il disparaîtra aussi du site.';
+if(confirm(q)){if(A.form&&A.form.id===id3)A.adding=false;upd(function(s){for(var k=0;k<s.length;k++){if(s[k].id===id3){s.splice(k,1);break;}}});toast(dm.draft?'Photo supprimée.':'Costume supprimé.');}
+return;}
+if(b.dataset.conf){var c=+b.dataset.conf,rc=null;updR(function(r){r.forEach(function(x){if(x.id===c){x.status='confirmé';rc=x;}});});if(rc)openSms(rc,'conf');return;}
+if(b.dataset.resms){var rs=LDC.rdv().filter(function(x){return x.id===+b.dataset.resms;})[0];if(rs)openSms(rs,'conf');return;}
+if(b.dataset.cancel){var d=+b.dataset.cancel,rx=null;if(!confirm('Annuler ce rendez-vous ? Un SMS d\u2019annulation sera préparé pour le client.'))return;updR(function(r){r.forEach(function(x){if(x.id===d){x.status='annulé';rx=x;}});});if(rx)openSms(rx,'cancel');return;}
 switch(b.dataset.act){
 case 'toggle-add':A.adding=!A.adding;if(A.adding)A.form=newForm();render();break;
 case 'cancel-form':A.adding=false;render();break;
+case 'del-drafts':if(confirm('Supprimer toutes les photos en attente ?')){upd(function(s){for(var k=s.length-1;k>=0;k--){if(s[k].draft)s.splice(k,1);}});toast('Photos en attente supprimées.');}break;
 case 'logout':A.logged=false;try{sessionStorage.removeItem('ldc-demo-login');}catch(x){}render();break;
 case 'reset':if(confirm('Remettre les costumes et rendez-vous de démonstration à zéro ?')){LDC.reset();render();toast('Démo réinitialisée.');}break;
 }
