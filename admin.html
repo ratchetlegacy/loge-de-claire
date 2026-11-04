@@ -146,10 +146,10 @@ button.sw{border:0;cursor:pointer;padding:0}
 .acl button{display:block;width:100%;text-align:left;padding:11px 14px;border:0;border-bottom:1px solid var(--line);background:#fff;cursor:pointer;font-weight:700;color:var(--ink)}
 .acl button:hover{background:var(--cream)}.acl small{font-weight:400;color:var(--brown2)}
 .items{display:flex;flex-direction:column;gap:8px;margin-top:6px}
-.item{display:grid;grid-template-columns:1fr 150px 90px 36px;gap:8px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 10px}
+.item{display:grid;grid-template-columns:1fr 170px 36px;gap:8px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 10px}
 .item select,.item input{min-height:42px;border-radius:10px;border:1px solid #C9B58A;padding:0 8px;background:#fff;width:100%}
 .item .del{font-size:22px;text-decoration:none;min-height:36px}
-@media(max-width:560px){.item{grid-template-columns:1fr 1fr 36px}.item b{grid-column:1/-1}}
+@media(max-width:560px){.item{grid-template-columns:1fr 36px}.item b{grid-column:1/-1}}
 .accs{display:flex;flex-direction:column;gap:10px}
 .accu{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden}
 .acc-h{width:100%;display:flex;align-items:center;gap:12px;padding:12px 14px;border:0;background:#fff;cursor:pointer;text-align:left}
@@ -309,10 +309,10 @@ function render(){
 /* ---------- Rendez-vous ---------- */
 var STC={'à confirmer':'var(--orange)','confirmé':'var(--green)','annulé':'#6B5744','venu':'var(--ink)','venu sans location':'#6B5744','absent':'var(--red)'};
 function vRdv(){
-  var td=LDC.today(),R=(A.R||[]).filter(function(r){return A.rdvMode==='avenir'?r.jour>=td:r.jour<td;});
+  var td=LDC.today(),open=function(r){return r.statut==='à confirmer'||r.statut==='confirmé';},R=(A.R||[]).filter(function(r){return A.rdvMode==='avenir'?open(r):!open(r);});
   if(A.rdvMode==='passes')R.reverse();
-  var h='<div class="seg"><button data-rmode="avenir" class="'+(A.rdvMode==='avenir'?'on':'')+'">À venir</button><button data-rmode="passes" class="'+(A.rdvMode==='passes'?'on':'')+'">Passés (30 jours)</button></div><div class="cards">';
-  if(!R.length)h+='<p class="empty">'+(A.rdvMode==='avenir'?'Aucun rendez-vous à venir. Les demandes d’essayage faites sur le site arrivent ici.':'Aucun rendez-vous passé.')+'</p>';
+  var h='<div class="seg"><button data-rmode="avenir" class="'+(A.rdvMode==='avenir'?'on':'')+'">À traiter</button><button data-rmode="passes" class="'+(A.rdvMode==='passes'?'on':'')+'">Terminés (30 jours)</button></div><div class="cards">';
+  if(!R.length)h+='<p class="empty">'+(A.rdvMode==='avenir'?'Aucun rendez-vous à traiter. Les demandes d’essayage faites sur le site arrivent ici.':'Aucun rendez-vous terminé.')+'</p>';
   R.forEach(function(r){
     var fav=(r.favoris||[]).map(function(f){return f.nom;}).join(', ');
     h+='<div class="rdv"><div class="top"><b>'+esc(LDC.fmtLong(r.jour))+' · '+esc(r.creneau)+'</b><span class="pill" style="background:'+(STC[r.statut]||'#6B5744')+'">'+esc(r.statut)+'</span></div>';
@@ -354,9 +354,10 @@ function ficheDraw(){
   if(!FI.items.length)h+='<p class="hint">Aucun costume pour l’instant.</p>';
   FI.items.forEach(function(it,i){
     h+='<div class="item"><b>'+esc(it.nom)+'</b><select data-fsize="'+i+'"><option value="">Taille…</option>'+(it.tailles||[]).map(function(t){return '<option value="'+esc(t.s)+'"'+(it.taille===t.s?' selected':'')+'>'+esc(t.s)+' ('+t.f+'/'+t.n+' en loge)</option>';}).join('')+'</select>'+
-      '<input data-fprix="'+i+'" type="number" inputmode="decimal" min="0" step="0.5" placeholder="Prix €" value="'+(it.prix!=null?it.prix:'')+'"><button type="button" class="del" data-fdel="'+i+'" aria-label="Retirer">×</button></div>';});
+      '<button type="button" class="del" data-fdel="'+i+'" aria-label="Retirer">×</button></div>';});
   h+='</div><div class="g2" style="margin-top:12px"><div class="field"><label for="fi-d">Départ</label><input id="fi-d" type="date" value="'+FI.depart+'"></div><div class="field"><label for="fi-r">Retour prévu le</label><input id="fi-r" type="date" value="'+FI.retour+'"></div>'+
-    '<div class="field"><label for="fi-ca">Caution (€)</label><input id="fi-ca" type="number" inputmode="decimal" min="0" value="'+esc(FI.caution)+'"></div><div class="field"><label for="fi-n">Note</label><input id="fi-n" value="'+esc(FI.note)+'" placeholder="facultatif"></div></div>';
+    '<div class="field"><label for="fi-p">Prix de la location (€)</label><input id="fi-p" type="number" inputmode="decimal" min="0" step="0.5" value="'+(FI.prix!=null?FI.prix:'')+'" placeholder="Total pour tous les costumes"></div><div class="field"><label for="fi-ca">Caution (€)</label><input id="fi-ca" type="number" inputmode="decimal" min="0" value="'+esc(FI.caution)+'"></div></div>'+
+    '<div class="field" style="margin-top:12px"><label for="fi-n">Note</label><input id="fi-n" value="'+esc(FI.note)+'" placeholder="facultatif"></div>';
   h+='<p class="err" id="fi-err" hidden></p><div class="form-acts" style="margin-top:14px"><button class="btn btn-red" type="button" data-act="fiche-save">Enregistrer la location</button><button class="btn btn-line" type="button" data-act="close">Annuler</button></div></div>';
   m.innerHTML=h;
   var q=$('fi-q'),res=$('fi-res'),tm=null;
@@ -364,9 +365,9 @@ function ficheDraw(){
     tm=setTimeout(function(){LDC.arpc('loge_costumes_recherche',{p_q:v}).then(function(L){A._res=L||[];if(!A._res.length){res.innerHTML='<p class="hint" style="padding:10px">Aucun costume trouvé.</p>';res.hidden=false;return;}
       res.innerHTML=A._res.map(function(c,i){return '<button type="button" data-fadd="'+i+'">'+esc(c.nom)+' <small>'+esc(uLabel(c.univers))+(c.ref?' · '+esc(c.ref):'')+'</small></button>';}).join('');res.hidden=false;}).catch(oops);},250);});
 }
-function ficheSync(){if(!FI||!$('fi-c'))return;FI.client=$('fi-c').value.trim();FI.tel=$('fi-t').value.trim();FI.depart=$('fi-d').value;FI.retour=$('fi-r').value;FI.caution=$('fi-ca').value;FI.note=$('fi-n').value.trim();
-  FI.items.forEach(function(it,i){var s=document.querySelector('[data-fsize="'+i+'"]'),p=document.querySelector('[data-fprix="'+i+'"]');if(s)it.taille=s.value;if(p)it.prix=p.value===''?null:+p.value.replace(',','.');});}
-function ficheAdd(c){ficheSync();var it={id:c.id,nom:c.nom,tailles:c.tailles||[],taille:'',prix:c.prix!=null?+c.prix:null};var av=it.tailles.filter(function(t){return t.f>0;});if(av.length===1)it.taille=av[0].s;FI.items.push(it);ficheDraw();}
+function ficheSync(){if(!FI||!$('fi-c'))return;FI.client=$('fi-c').value.trim();FI.tel=$('fi-t').value.trim();FI.depart=$('fi-d').value;FI.retour=$('fi-r').value;FI.caution=$('fi-ca').value;FI.note=$('fi-n').value.trim();var pv=$('fi-p').value.replace(',','.');if(pv!==String(FI.prixAuto==null?'':FI.prixAuto))FI.prixManuel=true;FI.prix=pv===''?null:+pv;
+  FI.items.forEach(function(it,i){var s=document.querySelector('[data-fsize="'+i+'"]');if(s)it.taille=s.value;});}
+function ficheAdd(c){ficheSync();var it={id:c.id,nom:c.nom,tailles:c.tailles||[],taille:'',prix:c.prix!=null?+c.prix:null};var av=it.tailles.filter(function(t){return t.f>0;});if(av.length===1)it.taille=av[0].s;FI.items.push(it);if(!FI.prixManuel){var sum=FI.items.reduce(function(a,x){return a+(x.prix||0);},0);FI.prix=FI.prixAuto=sum?sum:null;}ficheDraw();}
 
 /* ---------- Locations (fiches de retour) ---------- */
 function groups(L){var G={},o=[];L.forEach(function(l){var k=(l.rdv_id||'')+'|'+l.client+'|'+l.depart+'|'+l.retour_prevu+'|'+(l.rendu||'');if(!G[k]){G[k]={k:k,items:[],client:l.client,tel:l.tel,depart:l.depart,retour:l.retour_prevu,rendu:l.rendu,caution:l.caution,sms:l.sms_retard};o.push(G[k]);}G[k].items.push(l);if(l.sms_retard)G[k].sms=l.sms_retard;});return o;}
@@ -380,8 +381,8 @@ function vLoc(){
   G.forEach(function(g,gi){
     var st=g.rendu?'rendu':(g.retour<td?'late':(g.retour===td?'today':'')),tot=g.items.reduce(function(s,l){return s+(+l.prix||0);},0);
     h+='<div class="fiche '+st+'"><div class="top"><b>'+esc(g.client)+'</b><span class="pill" style="background:'+(st==='late'?'var(--red)':st==='today'?'var(--orange)':st==='rendu'?'var(--green)':'var(--ink)')+'">'+(st==='late'?'En retard':st==='today'?'Retour aujourd’hui':st==='rendu'?'Rendu le '+LDC.fmtShort(g.rendu):'En location')+'</span></div>';
-    h+='<p>'+(g.tel?'<a href="tel:'+tel(g.tel)+'">'+esc(g.tel)+'</a> · ':'')+'Parti le '+LDC.fmtShort(g.depart)+' · retour prévu <strong>'+LDC.fmtLong(g.retour)+'</strong>'+(g.caution?' · caution '+eur(g.caution):'')+(tot?' · '+eur(tot):'')+'</p>';
-    h+='<ul class="fl">'+g.items.map(function(l){return '<li>'+esc(l.costume_nom)+(l.taille?' <small>('+esc(l.taille)+')</small>':'')+(l.prix!=null?' <small>· '+eur(l.prix)+'</small>':'')+(!g.rendu&&g.items.length>1?' <button type="button" class="del" data-lrendu1="'+l.id+'">rendu</button>':'')+'</li>';}).join('')+'</ul>';
+    h+='<p>'+(g.tel?'<a href="tel:'+tel(g.tel)+'">'+esc(g.tel)+'</a> · ':'')+'Parti le '+LDC.fmtShort(g.depart)+' · retour prévu <strong>'+LDC.fmtLong(g.retour)+'</strong>'+(tot?' · location '+eur(tot):'')+(g.caution?' · caution '+eur(g.caution):'')+'</p>';
+    h+='<ul class="fl">'+g.items.map(function(l){return '<li>'+esc(l.costume_nom)+(l.taille?' <small>('+esc(l.taille)+')</small>':'')++(!g.rendu&&g.items.length>1?' <button type="button" class="del" data-lrendu1="'+l.id+'">rendu</button>':'')+'</li>';}).join('')+'</ul>';
     if(g.sms)h+='<p class="hint">SMS de retard envoyé le '+LDC.fmtShort(g.sms)+'</p>';
     if(!g.rendu){h+='<div class="acts"><button class="btn btn-red small" data-lrendu="'+gi+'">✓ Tout est rendu</button>'+(st==='late'?'<button class="btn btn-line small" data-lsms="'+gi+'">SMS de retard</button>':'<button class="btn btn-line small" data-lrappel="'+gi+'">SMS de rappel</button>')+
       '<label class="btn btn-line small dt">Nouvelle date de retour<input type="date" data-ldate="'+gi+'" value="'+g.retour+'"></label></div>';}
@@ -574,8 +575,8 @@ document.addEventListener('click',function(e){
   case 'close':var m=$('modal');if(m)m.remove();FI=null;CE=null;IM=null;break;
   case 'fiche-save':ficheSync();var fe=$('fi-err'),err=function(x){fe.textContent=x;fe.hidden=false;};
     if(!FI.client)return err('Indiquez le nom du client.');if(!FI.items.length)return err('Ajoutez au moins un costume.');if(!FI.retour)return err('Indiquez la date de retour.');
-    if(FI.items.some(function(it){return (it.tailles||[]).length&&!it.taille;}))return err('Choisissez la taille de chaque costume.');
-    busy(b,true);LDC.arpc('loge_location_creer',{p:{rdv_id:FI.rdv_id,client:FI.client,tel:FI.tel,depart:FI.depart,retour:FI.retour,caution:FI.caution===''?null:+FI.caution,note:FI.note,costumes:FI.items.map(function(it){return {id:it.id,nom:it.nom,taille:it.taille,prix:it.prix};})}})
+    if(FI.items.some(function(it){return (it.tailles||[]).length&&!it.taille;}))return err('Choisissez la taille de chaque costume.');if(FI.prix==null)return err('Indiquez le prix de la location.');
+    busy(b,true);LDC.arpc('loge_location_creer',{p:{rdv_id:FI.rdv_id,client:FI.client,tel:FI.tel,depart:FI.depart,retour:FI.retour,caution:FI.caution===''?null:+FI.caution,note:FI.note,costumes:FI.items.map(function(it,i){var n=FI.items.length,t=FI.prix,part=t==null?null:Math.round(t/n*100)/100;if(t!=null&&i===n-1)part=Math.round((t-part*(n-1))*100)/100;return {id:it.id,nom:it.nom,taille:it.taille,prix:part};})}})
     .then(function(){var mm=$('modal');if(mm)mm.remove();FI=null;A.tab='loc';A.locMode='encours';A.costs={};toast('Location enregistrée ✓');return Promise.all([loadR(),loadL(),loadU()]);}).then(render).catch(function(x){busy(b,false);oops(x);});break;
   case 'add':editCost(null);break;
   case 'cost-save':editSync();var ee=$('e-err'),er2=function(x){ee.textContent=x;ee.hidden=false;};
