@@ -311,7 +311,7 @@ var STC={'à confirmer':'var(--orange)','confirmé':'var(--green)','annulé':'#6
 function vRdv(){
   var td=LDC.today(),open=function(r){return r.statut==='à confirmer'||r.statut==='confirmé';},R=(A.R||[]).filter(function(r){return A.rdvMode==='avenir'?open(r):!open(r);});
   if(A.rdvMode==='passes')R.reverse();
-  var h='<div class="seg"><button data-rmode="avenir" class="'+(A.rdvMode==='avenir'?'on':'')+'">À traiter</button><button data-rmode="passes" class="'+(A.rdvMode==='passes'?'on':'')+'">Terminés (30 jours)</button></div><div class="cards">';
+  var h='<div class="tools" style="justify-content:space-between;align-items:center"><div class="seg" style="margin:0"><button data-rmode="avenir" class="'+(A.rdvMode==='avenir'?'on':'')+'">À traiter</button><button data-rmode="passes" class="'+(A.rdvMode==='passes'?'on':'')+'">Terminés (30 jours)</button></div><button class="btn btn-line small" type="button" data-act="rdv-refresh">↻ Actualiser</button></div><div class="cards">';
   if(!R.length)h+='<p class="empty">'+(A.rdvMode==='avenir'?'Aucun rendez-vous à traiter. Les demandes d’essayage faites sur le site arrivent ici.':'Aucun rendez-vous terminé.')+'</p>';
   R.forEach(function(r){
     var fav=(r.favoris||[]).map(function(f){return f.nom;}).join(', ');
@@ -606,6 +606,7 @@ document.addEventListener('click',function(e){
   case 'exppdf':var tt=document.title;document.title='Statistiques La Loge de Claire '+(A.annee==='tout'?'depuis le début':A.annee);toast('Choisissez « Enregistrer en PDF »');setTimeout(function(){window.print();document.title=tt;},400);break;
   case 'expxls':exportXlsx(b);break;
   case 'stats-refresh':A.ST=null;render();break;
+  case 'rdv-refresh':busy(b,true);Promise.all([loadR(),loadL()]).then(function(){render();toast('Rendez-vous à jour');}).catch(oops);break;
   }
 });
 var qt=null;
