@@ -203,8 +203,13 @@ footer p{margin:0}footer a{color:#fff;margin-left:20px}
 .coeur-h{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:4px 12px;margin:0 0 14px}
 .coeur-h h3{font-size:30px;color:var(--ink)}
 .coeur-h span{font-size:15px;color:var(--brown2)}
-.car{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 2px 14px;scrollbar-width:thin}
-.cc{flex:0 0 220px;scroll-snap-align:start;background:#fff;border:2px solid var(--line);border-radius:18px;overflow:hidden;text-align:left;padding:0;cursor:pointer;color:var(--ink);position:relative;display:flex;flex-direction:column;transition:transform .15s,border-color .15s}
+.car{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:16px;padding:4px 0 6px}
+@media (max-width:1000px){.car{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;padding:4px 0 8px}.car::-webkit-scrollbar{display:none}.car .cc{flex:0 0 calc((100% - 32px)/3)}}
+@media (max-width:640px){.car .cc{flex:0 0 calc((100% - 16px)/2)}}
+.car-nav{display:none;justify-content:center;gap:10px;margin-top:6px}
+@media (max-width:1000px){.car-nav{display:flex}}
+.car-nav button{width:44px;height:44px;border-radius:50%;border:2px solid var(--ink);background:#fff;font-size:22px;font-weight:900;cursor:pointer;color:var(--ink)}
+.cc{min-width:0;scroll-snap-align:start;background:#fff;border:2px solid var(--line);border-radius:18px;overflow:hidden;text-align:left;padding:0;cursor:pointer;color:var(--ink);position:relative;display:flex;flex-direction:column;transition:transform .15s,border-color .15s}
 .cc:hover{transform:translateY(-3px);border-color:var(--red)}
 .cc .im{height:240px}
 .cc .rk{position:absolute;top:10px;left:10px;background:var(--red);color:#fff;font-weight:900;font-size:13px;border-radius:999px;padding:3px 10px}
@@ -250,7 +255,7 @@ footer p{margin:0}footer a{color:#fff;margin-left:20px}
 .hdr-bar>a{position:relative;display:block}
 .hat{position:absolute;width:46px;top:-4px;left:44px;transform:rotate(18deg);pointer-events:none;z-index:2}
 .holly{position:absolute;width:120px;bottom:6px;left:11%;z-index:3;pointer-events:none}
-@media (max-width:720px){.deco.web{width:90px;height:90px}.spider i{height:90px}.hat{width:32px;left:30px}.holly{width:76px;left:16px}.cc{flex-basis:180px}.cc .im{height:200px}}
+@media (max-width:720px){.deco.web{width:90px;height:90px}.spider i{height:90px}.hat{width:32px;left:30px}.holly{width:76px;left:16px}.cc .im{height:200px}}
 @media (prefers-reduced-motion:reduce){.spider,.bat,.th-halloween .bulbs span,.th-noel .bulbs span{animation:none}.bat{display:none}}
 </style>
 </head>
@@ -443,7 +448,7 @@ function renderCoeur(){
   var h='<div class="coeur"><div class="coeur-h"><h3>Les coups de cœur</h3><span>Les costumes les plus demandés</span></div><div class="car">';
   TOP.forEach(function(c,i){var f=LDC.free(c);
     h+='<button type="button" class="cc" data-top="'+i+'"><span class="rk">N° '+(i+1)+'</span><span class="im" style="background:'+bgOf(c,true)+'"></span><span class="bd"><b>'+esc(c.nom)+'</b><small>'+esc(uById(c.univers).label)+' · '+(f?f+' dispo':'tout est loué')+'</small></span></button>';});
-  el.innerHTML=h+'</div></div>';
+  el.innerHTML=h+'</div><div class="car-nav"><button type="button" data-car="-1" aria-label="Précédent">‹</button><button type="button" data-car="1" aria-label="Suivant">›</button></div></div>';
 }
 /* ---------- Catalogue ---------- */
 function list(){return (CAT[S.view]||[]).filter(function(c){return !(S.onlyAvail&&LDC.free(c)===0);});}
@@ -598,6 +603,7 @@ document.addEventListener('click',function(e){
   if(b.dataset.unfav){var F=LDC.favoris().filter(function(f){return f.id===+b.dataset.unfav;})[0];if(F)LDC.toggleFav(F);render();return;}
   if(b.dataset.theme){S.theme=S.theme===b.dataset.theme?'':b.dataset.theme;var keep={n:val('r-nom'),t:val('r-tel'),b:val('r-nb'),o:val('r-note')};render();$('r-nom').value=keep.n;$('r-tel').value=keep.t;if(keep.b)$('r-nb').value=keep.b;$('r-note').value=keep.o;return;}
   if(b.dataset.go){S.idx=+b.dataset.go;render();return;}
+  if(b.dataset.car){var cr=document.querySelector('.car'),cw=cr.querySelector('.cc');cr.scrollBy({left:(+b.dataset.car)*(cw.offsetWidth+16),behavior:'smooth'});return;}
   if(b.dataset.day){S.day=DAYS[+b.dataset.day];S.slot=null;S.open='slot';render();return;}
   if(b.dataset.slot){S.slot=b.dataset.slot;S.open='info';render();return;}
   switch(b.dataset.act){
