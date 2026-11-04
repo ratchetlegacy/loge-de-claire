@@ -398,6 +398,13 @@ function vStock(){
   var h='<div class="stats"><div class="stat"><b>'+nb+'</b><span>modèles</span></div><div class="stat"><b>'+ex+'</b><span>exemplaires</span></div><div class="stat"><b style="color:var(--red)">'+out+'</b><span>en location</span></div></div>';
   h+='<div class="tools"><div class="field"><label for="q">Rechercher</label><input id="q" type="search" placeholder="Nom ou référence du costume…" value="'+esc(A.q)+'"></div>'+
     '<button class="btn btn-red" type="button" data-act="add">+ Ajouter un costume</button><button class="btn btn-line" type="button" data-act="import">Importer un fichier Excel</button></div>';
+  h+='<div class="shoot"><p><strong>Séance photo</strong> – prenez vos costumes en photo à la suite, vous compléterez les fiches plus tard.</p><div class="shoot-btns">'+
+    '<label class="btn btn-red" for="cam">Prendre une photo</label><input id="cam" class="hide" type="file" accept="image/*" capture="environment">'+
+    '<label class="btn btn-line" for="gal">Choisir dans la galerie</label><input id="gal" class="hide" type="file" accept="image/*" multiple></div><p class="hint" id="shoot-s" style="margin:8px 0 0"></p></div>';
+  if(A.drafts==null){A.drafts=[];LDC.arpc('loge_brouillons').then(function(L){A.drafts=L||[];if(A.tab==='stock')render();}).catch(function(){});}
+  if(A.drafts.length){h+='<div class="sub-row"><h2 class="sub">Photos à compléter ('+A.drafts.length+')</h2><button type="button" class="del" data-act="del-drafts">Tout supprimer</button></div><div class="drafts">';
+    A.drafts.forEach(function(d){var p=LDC.photo(d.photo,true);h+='<div class="draft-box"><button type="button" class="draft" data-draft="'+d.id+'"><span class="ph" style="background:#F6EEDC url('+p+') center/cover"></span><span>Compléter</span></button><button type="button" class="draft-del" data-ddel="'+d.id+'">Supprimer</button></div>';});
+    h+='</div>';}
   if(A.qres){h+='<h2 class="sub">Résultats ('+A.qres.length+')</h2><div class="clist">'+(A.qres.length?A.qres.map(row).join(''):'<p class="empty">Aucun costume ne correspond.</p>')+'</div>';return h;}
   h+='<div class="accs">';
   U.forEach(function(u){var o=!!A.open[u.id];
@@ -566,6 +573,8 @@ document.addEventListener('click',function(e){
     sms(g2.tel,txt);return;}
   if(d.uopen){A.open[d.uopen]=!A.open[d.uopen];render();return;}
   if(d.edit){editCost(findCost(+d.edit));return;}
+  if(d.draft){var dr=A.drafts.filter(function(x){return x.id===+d.draft;})[0];editCost(dr);CE.nom='';editDraw();return;}
+  if(d.ddel){if(!confirm('Supprimer cette photo à compléter ?'))return;LDC.arpc('loge_costumes_retirer',{p_ids:[+d.ddel]}).then(function(){A.drafts=A.drafts.filter(function(x){return x.id!==+d.ddel;});render();toast('Photo supprimée');}).catch(oops);return;}
   if(d.tm){editSync();var t=CE.tailles[+d.tm];if(t.n<=Math.max(1,t.out)&&t.out){toast('Des exemplaires sont en location.');return;}t.n--;if(t.n<=0)CE.tailles.splice(+d.tm,1);editDraw();return;}
   if(d.tp){editSync();CE.tailles[+d.tp].n++;editDraw();return;}
   if(d.tadd){editSync();CE.tailles.push({s:d.tadd,n:1,out:0});editDraw();return;}
@@ -584,9 +593,10 @@ document.addEventListener('click',function(e){
     busy(b,true);var go=function(){return LDC.arpc('loge_costume_enregistrer',{p:{id:CE.id,ref:CE.ref,nom:CE.nom,univers:CE.univers,descr:CE.descr,photo:CE.photo||null,prix:CE.prix,tailles:CE.tailles.map(function(t){return {s:t.s,n:t.n};})}});};
     var nu=CE.univers==='__new'?prompt('Nom du nouvel univers :'):null;
     (nu?LDC.arpc('loge_univers_enregistrer',{p:{id:slug(nu),label:nu.trim(),ordre:100}}).then(function(){CE.univers=slug(nu);}):Promise.resolve()).then(function(){if(CE.univers==='__new')throw new Error('univers');return go();})
-    .then(function(){var u=CE.univers;$('modal').remove();CE=null;delete A.costs[u];A.qres=null;A.q='';A.open[u]=true;toast('Costume enregistré ✓');return loadU().then(function(){return loadUnivers(u);});}).catch(function(x){busy(b,false);if(String(x.message)==='univers')return er2('Choisissez un univers.');oops(x);});break;
+    .then(function(){var u=CE.univers;$('modal').remove();CE=null;delete A.costs[u];A.qres=null;A.q='';A.open[u]=true;A.drafts=null;toast('Costume enregistré ✓');return loadU().then(function(){return loadUnivers(u);});}).catch(function(x){busy(b,false);if(String(x.message)==='univers')return er2('Choisissez un univers.');oops(x);});break;
   case 'cost-del':if(!confirm('Supprimer « '+CE.nom+' » ? Il disparaît du site (l’historique des locations est conservé).'))return;
-    LDC.arpc('loge_costumes_retirer',{p_ids:[CE.id]}).then(function(){var u=CE.univers;$('modal').remove();CE=null;delete A.costs[u];toast('Costume supprimé');return loadU().then(function(){return loadUnivers(u);});}).catch(oops);break;
+    LDC.arpc('loge_costumes_retirer',{p_ids:[CE.id]}).then(function(){var u=CE.univers;$('modal').remove();CE=null;A.drafts=null;delete A.costs[u];toast('Costume supprimé');return loadU().then(function(){return loadUnivers(u);});}).catch(oops);break;
+  case 'del-drafts':if(!confirm('Supprimer toutes les photos à compléter ?'))return;LDC.arpc('loge_costumes_retirer',{p_ids:A.drafts.map(function(x){return x.id;})}).then(function(){A.drafts=[];render();toast('Photos supprimées');}).catch(oops);break;
   case 'demo-off':if(!confirm('Retirer du site tous les costumes de démonstration (référence DEMO) ?'))return;LDC.arpc('loge_demo_retirer').then(function(n){A.costs={};toast(n+' costume'+(n>1?'s':'')+' de démonstration retiré'+(n>1?'s':''));return loadU();}).then(render).catch(oops);break;
   case 'import':importOpen();break;
   case 'im-prev':document.querySelectorAll('[data-map]').forEach(function(s){IM.map[s.dataset.map]=s.value===''?null:+s.value;});
@@ -618,6 +628,11 @@ document.addEventListener('change',function(e){
   var t=e.target;
   if(t.id==='p-show')['p-old','p-new','p-new2'].forEach(function(id){$(id).type=t.checked?'text':'password';});
   if(t.dataset&&t.dataset.ldate){var g=A._G[+t.dataset.ldate];if(!t.value)return;locMaj(g.items.map(function(l){return l.id;}),{retour_prevu:t.value}).then(function(){toast('Date de retour modifiée');return loadL();}).then(render).catch(oops);}
+  if((t.id==='cam'||t.id==='gal')&&t.files&&t.files.length){var fl=[].slice.call(t.files,0,30),done=0,paths=[],st=$('shoot-s');t.value='';
+    st.textContent='Envoi des photos… 0 / '+fl.length;
+    fl.reduce(function(pr,f){return pr.then(function(){return LDC.uploadPhoto(f).then(function(p){paths.push(p);done++;st.textContent='Envoi des photos… '+done+' / '+fl.length;});});},Promise.resolve())
+    .then(function(){return LDC.arpc('loge_brouillons_creer',{p_photos:paths});}).then(function(){A.drafts=null;render();toast(paths.length>1?paths.length+' photos ajoutées – à compléter':'Photo ajoutée – vous pouvez enchaîner');})
+    .catch(function(x){console.warn(x);if(paths.length)LDC.arpc('loge_brouillons_creer',{p_photos:paths}).then(function(){A.drafts=null;render();}).catch(function(){});st.textContent='Une photo n’a pas pu être envoyée. Vérifiez la connexion.';});}
   if(t.id==='e-ph'&&t.files[0]){editSync();$('e-phs').textContent='Envoi de la photo…';LDC.uploadPhoto(t.files[0]).then(function(p){CE.photo=p;editDraw();toast('Photo ajoutée');}).catch(function(x){console.warn(x);$('e-phs').textContent='La photo n’a pas pu être envoyée.';});}
   if(t.id==='im-f'&&t.files[0]){var f=t.files[0];$('im-s').textContent='Lecture du fichier…';
     needXlsx().then(function(){return f.arrayBuffer();}).then(function(buf){var wb=XLSX.read(buf,{type:'array'}),ws=wb.Sheets[wb.SheetNames[0]],rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''}).filter(function(r){return r.some(function(c){return String(c).trim();});});
